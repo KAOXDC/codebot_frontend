@@ -68,6 +68,7 @@ let trackId = 4;
 let musNext = 0;
 let musStep = 0;
 let activeTrack = 4;
+let pendingTrack = null; // cambio de pista: se aplica justo en la siguiente barra, sin cortes
 
 const ensureMusic = () => {
   if (!music && ac) music = createMusic(ac, master);
@@ -76,10 +77,17 @@ const ensureMusic = () => {
 
 const tick = () => {
   if (!ac || !music) return;
-  const tr = music.tracks[activeTrack];
-  if (musNext < ac.currentTime - 0.5) musNext = ac.currentTime + 0.05;
-  while (musNext < ac.currentTime + 0.25) {
-    if (!muted) music.play(activeTrack, Math.floor(musStep / 16) % tr.bars, musStep % 16, musNext);
+  if (musNext < ac.currentTime - 0.5) musNext = ac.currentTime + 0.05; // la pestaña estuvo dormida
+  // Margen largo: si el navegador frena los temporizadores (pestaña en segundo plano), la música no se corta.
+  while (musNext < ac.currentTime + 1.2) {
+    if (musStep % 16 === 0 && pendingTrack !== null) {
+      activeTrack = pendingTrack;
+      pendingTrack = null;
+      musStep = 0;
+      music.setTempo(activeTrack, musNext);
+    }
+    const tr = music.tracks[activeTrack];
+    music.play(activeTrack, Math.floor(musStep / 16) % tr.bars, musStep % 16, musNext);
     musNext += music.step(activeTrack);
     musStep = (musStep + 1) % (tr.bars * 16);
   }
@@ -89,11 +97,11 @@ const arrancarPista = () => {
   activeTrack = trackId;
   musStep = 0;
   musNext = ac.currentTime + 0.06;
-  music.setTempo(activeTrack);
+  music.setTempo(activeTrack, ac.currentTime);
   const g = music.out.gain;
   g.cancelScheduledValues(ac.currentTime);
   g.setValueAtTime(0.0001, ac.currentTime);
-  g.linearRampToValueAtTime(0.7, ac.currentTime + 1.2);
+  g.linearRampToValueAtTime(muted ? 0.0001 : 0.7, ac.currentTime + 1.2);
 };
 
 export const Snd = {
@@ -112,20 +120,16 @@ export const Snd = {
     clearInterval(timer);
     musicOn = false;
   },
-  // 0-3 = temática del nivel, 4 = menú / final. Fundido corto al cambiar de pista.
+  // 0-3 = temática del nivel, 4 = menú / final. El cambio entra en la siguiente barra y las colas suenan hasta apagarse.
   setTrack(id) {
     if (id === trackId) return;
     trackId = id;
     if (!ac || !musicOn || !music) return;
-    const g = music.out.gain;
-    const t = ac.currentTime;
-    g.cancelScheduledValues(t);
-    g.setValueAtTime(g.value, t);
-    g.linearRampToValueAtTime(0.0001, t + 0.35);
-    setTimeout(() => { if (musicOn) arrancarPista(); }, 380);
+    pendingTrack = id === activeTrack ? null : id;
   },
   toggle() {
     muted = !muted;
+    if (music && ac) music.out.gain.setTargetAtTime(muted ? 0.0001 : 0.7, ac.currentTime, 0.05);
     return muted;
   },
   get muted() {

@@ -117,7 +117,8 @@ export function createMusic(ac, dest) {
     note('sine', mtof(m), t, dur, vol * 0.9, { to: bus, atk: 0.004, rel: 0.04 });
   }
   const padChord = (ch, t, dur, vol, lp) =>
-    ch.forEach((m) => note('sawtooth', mtof(m), t, dur, vol, { detune: 9, lp, q: 0.8, atk: 0.35, rel: 0.7, rev: 0.5 }));
+    // dura un poco más que el compás: cada acorde se mezcla con el siguiente (sin huecos al repetir)
+    ch.forEach((m) => note('sawtooth', mtof(m), t, dur + 1.0, vol, { detune: 9, lp, q: 0.8, atk: 0.55, rel: 1.0, rev: 0.5 }));
   const pluck = (m, t, dur, vol = 0.07, o = {}) =>
     note('square', mtof(m), t, dur, vol, { lp: 3200, lpTo: 600, q: 4, atk: 0.003, rel: 0.05, echo: 0.35, rev: 0.25, ...o });
   const lead = (m, t, dur, vol = 0.06, o = {}) =>
@@ -228,7 +229,14 @@ export function createMusic(ac, dest) {
     tracks,
     out,
     step,
-    setTempo(id) { echo.delayTime.value = step(id) * 3; },
-    play(id, bar, s, t) { tracks[id].play(bar, s, t); },
+    setTempo(id, t = ac.currentTime) { echo.delayTime.setTargetAtTime(step(id) * 3, t, 0.05); },
+    play(id, bar, s, t) {
+      tracks[id].play(bar, s, t);
+      // remate del último compás: redoble de hi-hats que "empuja" hacia el primer tiempo del bucle
+      if (bar === tracks[id].bars - 1 && s >= 12 && id < 4) {
+        hat(t, 0.05 + (s - 12) * 0.03);
+        if (s === 12) noise(t, 'highpass', 2500, 0.06, step(id) * 4.5);
+      }
+    },
   };
 }
