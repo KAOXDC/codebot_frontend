@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import GameShell from '../../shell/GameShell.jsx'
 import css from './styles.css?inline'
 import { LEVELS } from './engine/levels.js'
-import { initAudio, isMuted, setMuted, sfx, startMusic, stopMusic } from './audio/audio.js'
+import { initAudio, isMuted, setMuted, setTrack, sfx, startMusic, stopMusic } from './audio/audio.js'
 import { flushQueue, getProgress, submitAttempt } from './api/client.js'
 import { useProgress } from './hooks/useProgress.js'
 import RegisterScreen from './components/RegisterScreen.jsx'
@@ -41,6 +41,11 @@ export default function CodeQuestApp() {
 
   // Al volver al menú se apaga la música de este juego
   useEffect(() => () => stopMusic(), [])
+
+  // Cada mundo tiene su propia música; el menú y el mapa usan una pista aparte
+  useEffect(() => {
+    setTrack(screen === 'play' ? (LEVELS[levelIndex]?.world ?? 6) : 6)
+  }, [screen, levelIndex])
 
   const setSession = useCallback((s) => {
     setSessionState(s)

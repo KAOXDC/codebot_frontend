@@ -240,11 +240,7 @@ export function createBoard(canvas, levelIndex) {
       }
       ctx.save()
       ctx.globalAlpha = al
-      drawEnemy(ctx, o.x * T + ox, o.y * T + oy, t, th)
-      if (p > 0.4) {
-        ctx.fillStyle = Math.floor((t - o.t0) / 60) % 2 ? 'rgba(255,40,40,.65)' : 'rgba(255,255,255,.7)'
-        ctx.fillRect(o.x * T + ox + 7, o.y * T + oy + 8, 18, 18)
-      }
+      drawEnemy(ctx, o.x * T + ox, o.y * T + oy, t, th, p > 0.4 ? 5 : 4)
       ctx.restore()
     })
     // el héroe se lanza un poco hacia el enemigo al atacar

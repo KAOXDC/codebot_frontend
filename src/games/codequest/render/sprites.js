@@ -1,5 +1,6 @@
 // Dibujo de sprites y casillas (pixel art generado con código, sin imágenes).
 import { PALETTE } from '../engine/heroes.js'
+import { enemySheet, FRAME } from './assets.js'
 
 export const T = 32 // tamaño de casilla en el canvas
 
@@ -72,26 +73,17 @@ export function drawGem(ctx, x, y, t, th) {
   ctx.fillRect(x + 10, y + 18 + b, 12, 2)
 }
 
-export function drawEnemy(ctx, x, y, t, th) {
-  const b = Math.round(Math.sin(t / 260) * 1.5)
+// Enemigo del mundo (sprite PNG). frame: 0-3 reposo (animado), 4 golpe, 5 derrotado
+export function drawEnemy(ctx, x, y, t, th, frame) {
   x = Math.round(x)
   y = Math.round(y)
-  const e = th.enemy
-  ctx.fillStyle = e[0]
-  ctx.fillRect(x + 7, y + 8 + b, 18, 16)
-  ctx.fillStyle = e[1]
-  ctx.fillRect(x + 9, y + 10 + b, 14, 6)
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(x + 11, y + 12 + b, 4, 4)
-  ctx.fillRect(x + 18, y + 12 + b, 4, 4)
-  ctx.fillStyle = '#dc2626'
-  ctx.fillRect(x + 12, y + 13 + b, 2, 2)
-  ctx.fillRect(x + 19, y + 13 + b, 2, 2)
-  ctx.fillStyle = '#fff'
-  ctx.fillRect(x + 12, y + 19 + b, 2, 3)
-  ctx.fillRect(x + 18, y + 19 + b, 2, 3)
-  ctx.fillStyle = e[2]
-  ctx.fillRect(x + 7, y + 24, 18, 2)
+  const sh = enemySheet(th.id)
+  if (!sh.complete || !sh.naturalWidth) return
+  const f = frame ?? Math.floor((t + x * 7 + y * 13) / 300) % 4
+  ctx.fillStyle = 'rgba(0,0,0,.28)'
+  ctx.fillRect(x + 8, y + 29, 16, 2)
+  ctx.fillRect(x + 10, y + 28, 12, 1)
+  ctx.drawImage(sh, f * FRAME, 0, FRAME, FRAME, x, y, FRAME, FRAME)
 }
 
 // Antorcha (llama) o cristal luminoso según el mundo
