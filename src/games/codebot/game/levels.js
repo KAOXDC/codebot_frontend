@@ -1,8 +1,8 @@
 export const TEMATICAS = [
   { nombre: 'Secuencias', ayuda: 'Las instrucciones se ejecutan en orden, una tras otra.' },
   { nombre: 'Funciones', ayuda: 'Agrupa instrucciones en F1/F2 y reutilízalas con un solo bloque.' },
-  { nombre: 'Bucles', ayuda: '🔁 repite el bloque siguiente N veces (toca el bloque para cambiar N).' },
-  { nombre: 'Condicionales', ayuda: '🔷 ejecuta el bloque siguiente solo si estás sobre una casilla azul.' },
+  { nombre: 'Bucles', ayuda: 'El bloque Repetir repite el bloque siguiente N veces (toca el bloque para cambiar N).' },
+  { nombre: 'Condicionales', ayuda: 'El bloque Si azul ejecuta el bloque siguiente solo si estás sobre una casilla azul.' },
 ];
 
 export const BLOQUES = {

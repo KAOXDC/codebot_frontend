@@ -1,4 +1,8 @@
 import { BLOQUES, TEMATICAS } from '../game/levels.js';
+import { ICONO_BLOQUE, ICONO_ACCION } from '../game/icons.js';
+
+const Bi = ({ k }) => <img className="bi" src={ICONO_BLOQUE[k]} alt="" draggable="false" />;
+const Ai = ({ k }) => <span className="ai" style={{ '--m': `url(${ICONO_ACCION[k]})` }} aria-hidden="true" />;
 
 // Filas de programa (Principal, F1, F2), paleta de bloques y botones de acción
 export default function ProgramPanel({
@@ -10,7 +14,7 @@ export default function ProgramPanel({
   return (
     <div className="card">
       <div id="info">
-        <b>{tem.nombre}:</b> {tem.ayuda} Enciende las <b>{level.l.length}</b> 💡.
+        <b>{tem.nombre}:</b> {tem.ayuda} Enciende las <b>{level.l.length}</b> {level.l.length === 1 ? "bombilla" : "bombillas"} <img className="bi inl" src={ICONO_BLOQUE.B} alt="" style={{ background: BLOQUES.B.color }} />.
       </div>
 
       {['main', 'f1', 'f2'].map((k) => {
@@ -30,7 +34,7 @@ export default function ProgramPanel({
                   style={{ background: def.color }}
                   onClick={(e) => { e.stopPropagation(); onSlot(k, i); }}
                 >
-                  {def.icono}{b.t === 'REP' ? '×' + b.n : ''}
+                  <Bi k={b.t} />{b.t === 'REP' && <em className="rn">×{b.n}</em>}
                   <i onClick={(e) => { e.stopPropagation(); onQuitar(k, i); }}>×</i>
                 </div>
               );
@@ -43,16 +47,16 @@ export default function ProgramPanel({
       <div id="pal">
         {level.a.map((k) => (
           <button key={k} className="pb" style={{ background: BLOQUES[k].color }} onClick={() => onAgregar(k)}>
-            {BLOQUES[k].icono}
+            <Bi k={k} />
             <small>{BLOQUES[k].nombre}</small>
           </button>
         ))}
       </div>
 
       <div className="actions">
-        <button className="go" onClick={onEjecutar} disabled={ocupado}>▶ Ejecutar</button>
-        <button className="sec" onClick={onReiniciar}>↺ Reiniciar</button>
-        <button className="sec" onClick={onBorrar}>🗑 Borrar</button>
+        <button className="go" onClick={onEjecutar} disabled={ocupado}><Ai k="ejecutar" />Ejecutar</button>
+        <button className="sec" onClick={onReiniciar}><Ai k="reiniciar" />Reiniciar</button>
+        <button className="sec" onClick={onBorrar}><Ai k="borrar" />Borrar</button>
       </div>
     </div>
   );
