@@ -1,12 +1,16 @@
 // Tablero: dibuja la mazmorra, el héroe, los efectos de ataque y la iluminación de antorchas.
-import { getHero, HERO_COLORS } from '../engine/heroes.js'
-import { T, rnd, drawSprite, drawFloor, drawWall, drawGem, drawEnemy, drawTorch } from './sprites.js'
+import { HERO_COLORS } from '../engine/heroes.js'
+import { LEVELS } from '../engine/levels.js'
+import { T, rnd, drawFloor, drawWall, drawGem, drawEnemy, drawProp } from './sprites.js'
+import { themeOf, drawAmbient } from './themes.js'
+import { heroSheet, FRAME, IDLE_FRAMES, ATTACK_FRAMES } from './assets.js'
 
 const flick = (t, ph) => 1 + Math.sin(t / 90 + ph) * 0.08 + Math.sin(t / 37 + ph * 2.3) * 0.05
 
 // Una instancia por canvas. levelIndex solo sirve para variar la semilla del suelo y el nº de antorchas.
 export function createBoard(canvas, levelIndex) {
   const ctx = canvas.getContext('2d')
+  const th = themeOf(LEVELS[levelIndex]?.world)
   let fx = []
   let dying = []
   let parts = []
@@ -62,7 +66,7 @@ export function createBoard(canvas, levelIndex) {
     const l = light.getContext('2d')
     l.globalCompositeOperation = 'source-over'
     l.clearRect(0, 0, W, H)
-    l.fillStyle = 'rgba(6,4,14,.8)'
+    l.fillStyle = `rgba(${th.darkRGB},${th.dark})`
     l.fillRect(0, 0, W, H)
     l.globalCompositeOperation = 'destination-out'
     const hole = (cx, cy, r, a) => {
@@ -81,8 +85,8 @@ export function createBoard(canvas, levelIndex) {
       const cy = c[1] * T + 16
       const r = T * 3.2 * flick(t, i * 1.7 + 1)
       const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, r)
-      g.addColorStop(0, 'rgba(255,150,50,.30)')
-      g.addColorStop(1, 'rgba(255,120,30,0)')
+      g.addColorStop(0, th.glow)
+      g.addColorStop(1, th.glow.replace(/,[\d.]+\)$/, ',0)'))
       ctx.fillStyle = g
       ctx.fillRect(cx - r, cy - r, r * 2, r * 2)
     })
@@ -198,30 +202,29 @@ export function createBoard(canvas, levelIndex) {
 
   // s = { w, h, walls, gems, enemies, x, y, face }
   function draw(s, t, heroId) {
-    const hero = getHero(heroId)
     if (canvas.width !== s.w * T || canvas.height !== s.h * T) {
       canvas.width = s.w * T
       canvas.height = s.h * T
     }
     ctx.imageSmoothingEnabled = false
-    ctx.fillStyle = '#14101e'
+    ctx.fillStyle = th.bg
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     for (let y = 0; y < s.h; y++) {
       for (let x = 0; x < s.w; x++) {
         const seed = x * 7 + y * 13 + levelIndex * 3 + 1
-        if (s.walls.has(x + ',' + y)) drawWall(ctx, x * T, y * T, seed)
-        else drawFloor(ctx, x * T, y * T, seed)
+        if (s.walls.has(x + ',' + y)) drawWall(ctx, x * T, y * T, seed, th)
+        else drawFloor(ctx, x * T, y * T, seed, th)
       }
     }
     const tc = getTorches(s)
-    tc.forEach((c, i) => drawTorch(ctx, c[0] * T, c[1] * T, t, i * 1.7 + 1))
+    tc.forEach((c, i) => drawProp(ctx, c[0] * T, c[1] * T, t, i * 1.7 + 1, th))
     s.gems.forEach((k) => {
       const [x, y] = k.split(',').map(Number)
-      drawGem(ctx, x * T, y * T, t)
+      drawGem(ctx, x * T, y * T, t, th)
     })
     s.enemies.forEach((k) => {
       const [x, y] = k.split(',').map(Number)
-      drawEnemy(ctx, x * T, y * T, t)
+      drawEnemy(ctx, x * T, y * T, t, th)
     })
     dying = dying.filter((o) => t - o.t0 < 800)
     dying.forEach((o) => {
@@ -237,7 +240,7 @@ export function createBoard(canvas, levelIndex) {
       }
       ctx.save()
       ctx.globalAlpha = al
-      drawEnemy(ctx, o.x * T + ox, o.y * T + oy, t)
+      drawEnemy(ctx, o.x * T + ox, o.y * T + oy, t, th)
       if (p > 0.4) {
         ctx.fillStyle = Math.floor((t - o.t0) / 60) % 2 ? 'rgba(255,40,40,.65)' : 'rgba(255,255,255,.7)'
         ctx.fillRect(o.x * T + ox + 7, o.y * T + oy + 8, 18, 18)
@@ -255,9 +258,31 @@ export function createBoard(canvas, levelIndex) {
         ly += e.dy * k
       }
     })
-    const bob = Math.sin(t / 180)
-    drawSprite(ctx, hero.pixels, s.x * T + lx, s.y * T + ly + bob - 2, 2, s.face === 1)
+    // Héroe: sprite PNG por fotogramas (reposo o ataque), siempre en píxeles enteros para que no se vea borroso
+    let frame = Math.floor(t / 260) % IDLE_FRAMES
+    fx.forEach((e) => {
+      const p = (t - e.t0) / 420
+      if (p >= 0 && p < 1) frame = IDLE_FRAMES + Math.min(ATTACK_FRAMES - 1, Math.floor(p * ATTACK_FRAMES))
+    })
+    const hx = Math.round(s.x * T + lx)
+    const hy = Math.round(s.y * T + ly)
+    ctx.fillStyle = 'rgba(0,0,0,.30)'
+    ctx.fillRect(hx + 8, hy + 29, 16, 2)
+    ctx.fillRect(hx + 10, hy + 28, 12, 1)
+    const sheet = heroSheet(heroId)
+    if (sheet.complete && sheet.naturalWidth) {
+      ctx.save()
+      if (s.face === 1) {
+        ctx.translate(hx + FRAME, hy)
+        ctx.scale(-1, 1)
+        ctx.drawImage(sheet, frame * FRAME, 0, FRAME, FRAME, 0, 0, FRAME, FRAME)
+      } else {
+        ctx.drawImage(sheet, frame * FRAME, 0, FRAME, FRAME, hx, hy, FRAME, FRAME)
+      }
+      ctx.restore()
+    }
     lighting(s, t, tc)
+    drawAmbient(ctx, canvas.width, canvas.height, t, th)
     drawFX(t)
   }
 

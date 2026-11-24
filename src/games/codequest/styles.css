@@ -30,6 +30,7 @@ canvas.board { width: 100%; max-width: 520px; image-rendering: pixelated; border
 .cnt { font-size: .8rem; color: #a89f8a; }
 .map { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .lv { border: 2px solid #3a3050; border-radius: 10px; background: #120e1b; color: inherit; padding: 10px 4px; cursor: pointer; font: inherit; }
+.lv:not(.lock) { border-color: var(--wc, #3a3050); }
 .lv.done { border-color: #4ade80; }
 .lv.lock { opacity: .35; cursor: not-allowed; }
 .lv small { display: block; color: #a89f8a; font-size: .7rem; }
@@ -82,3 +83,8 @@ canvas.board { width: 100%; max-width: 520px; image-rendering: pixelated; border
   .boardcol canvas.board { height: auto; }
   .codecol .ed { flex: none; height: 240px; }
 }
+
+/* Cabecera de cada mundo con su isla */
+.worldhead { display: flex; align-items: center; gap: 12px; margin: 16px 0 8px; padding: 6px 14px 6px 8px; border-radius: 14px; border: 2px solid; }
+.worldhead img { image-rendering: pixelated; flex: none; }
+.worldhead small { color: #d9d2c0; opacity: .85; }

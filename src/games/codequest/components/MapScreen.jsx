@@ -3,6 +3,8 @@ import { getHero } from '../engine/heroes.js'
 import { medalEmojis } from '../engine/medals.js'
 import { sfx } from '../audio/audio.js'
 import { pendingCount } from '../api/client.js'
+import { ISLAND_URLS } from '../render/assets.js'
+import { themeOf } from '../render/themes.js'
 import CertificadoBoton from '../../../shell/CertificadoBoton.jsx'
 
 export default function MapScreen({ session, progress, muted, onToggleMute, onOpen, onLogout }) {
@@ -42,9 +44,17 @@ export default function MapScreen({ session, progress, muted, onToggleMute, onOp
           />
         </div>
       )}
-      {WORLDS.map((name, wi) => (
-        <div key={name}>
-          <div className="world">Mundo {wi + 1}: {name}</div>
+      {WORLDS.map((name, wi) => {
+        const th = themeOf(wi)
+        return (
+        <div key={name} style={{ '--wc': th.accent }}>
+          <div className="worldhead" style={{ background: `linear-gradient(90deg, ${th.banner[0]}, ${th.banner[1]})`, borderColor: th.accent }}>
+            <img src={ISLAND_URLS[wi]} alt="" width="64" height="64" />
+            <div>
+              <div className="world" style={{ margin: 0, color: th.accent }}>Mundo {wi + 1}: {name}</div>
+              <small>{th.nombre}</small>
+            </div>
+          </div>
           <div className="map">
             {LEVELS.filter((l) => l.world === wi).map((l) => {
               const unlocked = progress.isUnlocked(l.index)
@@ -59,7 +69,8 @@ export default function MapScreen({ session, progress, muted, onToggleMute, onOp
             })}
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

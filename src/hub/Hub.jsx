@@ -76,7 +76,7 @@ export default function Hub() {
             <div className="art px">
               {HEROES.map((h, i) => (
                 <Flota key={h.id} quieto={quieto} i={i}>
-                  <HeroSprite hero={h} size={72} />
+                  <HeroSprite hero={h} size={96} />
                 </Flota>
               ))}
             </div>
