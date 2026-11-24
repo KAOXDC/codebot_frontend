@@ -32,6 +32,10 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
 
   const level = LEVELS[idx];
 
+  // Cada temática tiene su propia pista cyberpunk
+  useEffect(() => { Snd.setTrack(level.t); }, [level.t]);
+  useEffect(() => () => Snd.setTrack(4), []);
+
   useEffect(() => {
     const iv = setInterval(() => setAhora(Date.now()), 500);
     return () => clearInterval(iv);

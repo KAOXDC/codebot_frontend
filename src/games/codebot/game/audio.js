@@ -1,10 +1,11 @@
 // Todo el sonido se genera con Web Audio: no hay archivos de audio.
+// Música: synthwave / cyberpunk, una pista por temática (0 Secuencias, 1 Funciones, 2 Bucles, 3 Condicionales) y una de menú (4).
+import { createMusic } from './music.js';
 let ac = null;
 let master = null;
 let muted = false;
 let musicOn = false;
 let timer = null;
-let paso = 0;
 
 const init = () => {
   if (ac) {
@@ -61,33 +62,67 @@ const fx = {
   star(i = 0) { tone(700 + i * 220, now(), 0.25, 'sine', 0.12); },
 };
 
-// Melodía alegre en Do mayor (bucle de 32 corcheas) con bajo
-const MEL = [523,0,659,0,784,659,0,587, 659,0,523,0,587,659,0,0, 523,0,659,0,784,880,0,784, 659,587,523,0,587,0,523,0];
-const BAS = [131,0,0,0,196,0,0,0, 175,0,0,0,196,0,0,0, 131,0,0,0,196,0,0,0, 175,0,0,0,131,0,0,0];
+
+let music = null;
+let trackId = 4;
+let musNext = 0;
+let musStep = 0;
+let activeTrack = 4;
+
+const ensureMusic = () => {
+  if (!music && ac) music = createMusic(ac, master);
+  return music;
+};
 
 const tick = () => {
-  if (!ac) return;
-  const t = ac.currentTime + 0.05;
-  const i = paso % MEL.length;
-  if (!muted) {
-    if (MEL[i]) tone(MEL[i], t, 0.22, 'triangle', 0.045);
-    if (BAS[i]) tone(BAS[i], t, 0.4, 'sine', 0.07);
-    if (i % 4 === 0) tone(60, t, 0.08, 'sine', 0.08, 40);
+  if (!ac || !music) return;
+  const tr = music.tracks[activeTrack];
+  if (musNext < ac.currentTime - 0.5) musNext = ac.currentTime + 0.05;
+  while (musNext < ac.currentTime + 0.25) {
+    if (!muted) music.play(activeTrack, Math.floor(musStep / 16) % tr.bars, musStep % 16, musNext);
+    musNext += music.step(activeTrack);
+    musStep = (musStep + 1) % (tr.bars * 16);
   }
-  paso++;
+};
+
+const arrancarPista = () => {
+  activeTrack = trackId;
+  musStep = 0;
+  musNext = ac.currentTime + 0.06;
+  music.setTempo(activeTrack);
+  const g = music.out.gain;
+  g.cancelScheduledValues(ac.currentTime);
+  g.setValueAtTime(0.0001, ac.currentTime);
+  g.linearRampToValueAtTime(0.7, ac.currentTime + 1.2);
 };
 
 export const Snd = {
   init,
   startMusic() {
     init();
-    if (musicOn || !ac) return;
+    if (!ac) return;
+    if (ac.state === 'suspended') ac.resume();
+    if (musicOn) return;
+    ensureMusic();
     musicOn = true;
-    timer = setInterval(tick, 260);
+    arrancarPista();
+    timer = setInterval(tick, 50);
   },
   stopMusic() {
     clearInterval(timer);
     musicOn = false;
+  },
+  // 0-3 = temática del nivel, 4 = menú / final. Fundido corto al cambiar de pista.
+  setTrack(id) {
+    if (id === trackId) return;
+    trackId = id;
+    if (!ac || !musicOn || !music) return;
+    const g = music.out.gain;
+    const t = ac.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(0.0001, t + 0.35);
+    setTimeout(() => { if (musicOn) arrancarPista(); }, 380);
   },
   toggle() {
     muted = !muted;
