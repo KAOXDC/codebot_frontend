@@ -24,7 +24,10 @@ export default function GameShell({ title, css, confirmExit = false, children })
     <>
       <StyleScope css={css + '\n' + shellCss} />
       {children}
-      <a className="hubback" href="#/" onClick={salir}>← Menú</a>
+      <a className="hubback" href="#/" onClick={salir} aria-label="Volver al menú">
+        <span aria-hidden="true">←</span>
+        <span className="tx">Menú</span>
+      </a>
     </>
   )
 }
