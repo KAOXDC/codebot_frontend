@@ -85,8 +85,12 @@ export function renderScene(ctx, canvas, level, view, particles, gender, time) {
   }
 
   // de atrás hacia adelante (por x+y) para que el robot quede bien tapado
-  const robotX = Math.round(view.cx);
-  const robotY = Math.round(view.cy);
+  // Casilla que "ordena" al robot: mientras camina o salta, pasa a la casilla destino un poco ANTES
+  // de la mitad, para que la baldosa de adelante no lo tape y luego lo suelte de golpe.
+  const moviendo = (view.mode === 'walk' || view.mode === 'jump') && (view.fx !== view.tx || view.fy !== view.ty);
+  const adelante = moviendo && view.e > 0.22;
+  const robotX = moviendo ? (adelante ? view.tx : view.fx) : Math.round(view.cx);
+  const robotY = moviendo ? (adelante ? view.ty : view.fy) : Math.round(view.cy);
   let robotDibujado = false;
   for (let suma = 0; suma <= G.W + G.H; suma++) {
     for (let y = 0; y < G.H; y++) {
