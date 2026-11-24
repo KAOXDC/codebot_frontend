@@ -9,6 +9,19 @@ import { initAudio, sfx, startMusic } from '../audio/audio.js'
 import MissionBox from './MissionBox.jsx'
 import Editor from './Editor.jsx'
 import CommandBar from './CommandBar.jsx'
+import Acordeon from './Acordeon.jsx'
+
+// Código JavaScript con números de línea; se actualiza mientras el estudiante escribe
+function JsView({ code }) {
+  const lines = toJavaScriptView(code).split('\n')
+  return (
+    <div className="jsv" tabIndex={0} aria-label="Código JavaScript equivalente">
+      {lines.map((ln, i) => (
+        <div key={i}><span>{i + 1}</span><code>{ln || ' '}</code></div>
+      ))}
+    </div>
+  )
+}
 
 const FIRST_MESSAGE = { text: 'Escribe tu código y pulsa Ejecutar.', kind: '' }
 
@@ -20,6 +33,8 @@ export default function PlayScreen({ level, heroId, initialMask, hasNext, onBack
   const [mask, setMask] = useState(initialMask)
   const [won, setWon] = useState(false)
   const [resetKey, setResetKey] = useState(0)
+  const [verPista, setVerPista] = useState(false)
+  const [verJs, setVerJs] = useState(false)
 
   const canvasRef = useRef(null)
   const taRef = useRef(null)
@@ -190,7 +205,7 @@ export default function PlayScreen({ level, heroId, initialMask, hasNext, onBack
       <div className="grid2">
         <div className="card boardcol"><canvas ref={canvasRef} className="board" width={320} height={320} /></div>
         <div className="card codecol">
-          <Editor value={code} onChange={setCode} taRef={taRef} preRef={preRef} />
+          <Editor value={code} onChange={setCode} taRef={taRef} preRef={preRef} levelIndex={level.index} />
           <div className="cnt legend">
             <span className="kw">if · for · while · def</span> · <span className="cmd">comandos</span> · <span className="fn">funciones</span> · <span className="co">True / False</span> · <span className="st">textos</span> · <span className="nu">números</span> · <span className="cm"># comentarios</span>
           </div>
@@ -198,11 +213,17 @@ export default function PlayScreen({ level, heroId, initialMask, hasNext, onBack
           <div className="row">
             <button className="go" onClick={run} disabled={running}>▶ Ejecutar</button>
             <button className="sec" onClick={reset}>Reiniciar</button>
-            <button className="sec" onClick={() => { sfx.click(); setMessage({ kind: '', text: 'Pista: ' + level.hint }) }}>💡 Pista</button>
-            <button className="sec" onClick={() => { sfx.click(); setMessage({ kind: '', text: 'Equivalente en JavaScript:\n' + toJavaScriptView(code) }) }}>Ver en JavaScript</button>
+            <button className="sec" aria-pressed={verPista} onClick={() => { sfx.click(); setVerPista((v) => !v) }}>💡 Pista</button>
+            <button className="sec" aria-pressed={verJs} onClick={() => { sfx.click(); setVerJs((v) => !v) }}>Ver en JavaScript</button>
             {won && hasNext && <button className="go" onClick={() => { sfx.click(); onNext() }}>Siguiente →</button>}
           </div>
           <div className={'msg ' + message.kind} role="status">{message.text}</div>
+          <Acordeon titulo="💡 Pista" abierto={verPista} onToggle={() => setVerPista((v) => !v)}>
+            <div className="hintbox">{level.hint}</div>
+          </Acordeon>
+          <Acordeon titulo="Equivalente en JavaScript" abierto={verJs} onToggle={() => setVerJs((v) => !v)}>
+            {verJs && <JsView code={code} />}
+          </Acordeon>
           <CommandBar levelIndex={level.index} onInsert={insert} />
         </div>
       </div>
