@@ -51,8 +51,12 @@ export function simular(level, prog) {
       ev.push({ k: 'turn', fx: x, fy: y, tx: x, ty: y, d: antes, d2: d, lit: [...lit] });
     } else if (b.t === 'B') {
       if (level.l.some((p) => p[0] === x && p[1] === y)) {
-        lit.add(x + ',' + y);
-        ev.push({ k: 'bulb', fx: x, fy: y, tx: x, ty: y, d, lit: [...lit] });
+        // Encender sobre una bombilla que ya está encendida la apaga (interruptor)
+        const clave = x + ',' + y;
+        const off = lit.has(clave);
+        if (off) lit.delete(clave);
+        else lit.add(clave);
+        ev.push({ k: 'bulb', fx: x, fy: y, tx: x, ty: y, d, lit: [...lit], off });
       } else {
         throw new ErrorPrograma('sin_bombilla');
       }

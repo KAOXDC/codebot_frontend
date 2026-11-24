@@ -107,11 +107,18 @@ const Board = forwardRef(function Board({ level, gender }, ref) {
             view.cy = ev.fy + (ev.ty - ev.fy) * suave;
             if (ev.k === 'turn' && p > 0.5) view.dir = ev.d2; // aquí cambia de frente a espalda
             if (ev.k === 'bulb') {
-              view.lit = p > 0.35 ? ev.lit : ev.lit.slice(0, -1);
+              const clave = ev.fx + ',' + ev.fy;
+              if (ev.off) view.lit = p > 0.35 ? ev.lit : [...ev.lit, clave]; // se apaga a mitad del gesto
+              else view.lit = p > 0.35 ? ev.lit : ev.lit.filter((c) => c !== clave);
               if (p > 0.35 && !campana) {
                 campana = true;
-                sfx('bulb');
-                lanzarChispas(['#fde047', '#f59e0b', '#fff7ad'], 26);
+                if (ev.off) {
+                  sfx('remove');
+                  lanzarChispas(['#94a3b8', '#cbd5e1'], 10);
+                } else {
+                  sfx('bulb');
+                  lanzarChispas(['#fde047', '#f59e0b', '#fff7ad'], 26);
+                }
               }
             }
             if (ev.k === 'walk' && p > 0.5 && !paso2) {

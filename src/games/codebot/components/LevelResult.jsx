@@ -9,9 +9,11 @@ const F = { o: { opacity: 0, x: -14 }, v: { opacity: 1, x: 0 } };
 export default function LevelResult({ nivel, r, intentos, total, ultimo, onNext }) {
   const [estrellas, setEstrellas] = useState(0);
   const [cuenta, setCuenta] = useState(0);
+  const [listo, setListo] = useState(false); // el botón se activa tras un instante: así un doble clic no lo salta
+  const [pulsado, setPulsado] = useState(false);
 
   useEffect(() => {
-    const timers = [setTimeout(() => celebrar(r.estrellas / 3 + 0.4), 250)];
+    const timers = [setTimeout(() => celebrar(r.estrellas / 3 + 0.4), 250), setTimeout(() => setListo(true), 700)];
     for (let i = 0; i < r.estrellas; i++) {
       timers.push(
         setTimeout(() => {
@@ -56,7 +58,7 @@ export default function LevelResult({ nivel, r, intentos, total, ultimo, onNext 
           <motion.div variants={F}><span>🧩 Pocos bloques ({r.bloquesUsados})</span><span>+{r.bloques}</span></motion.div>
         </motion.div>
         <div className="tot">Total acumulado: <b>{total} pts</b></div>
-        <button className="go" onClick={onNext}>{ultimo ? 'Ver resultado final 🏁' : 'Siguiente nivel →'}</button>
+        <button className="go" disabled={!listo || pulsado} onClick={() => { if (pulsado) return; setPulsado(true); onNext(); }}>{ultimo ? 'Ver resultado final 🏁' : 'Siguiente nivel →'}</button>
       </motion.div>
     </motion.div>
   );

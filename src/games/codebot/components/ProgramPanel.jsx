@@ -14,7 +14,7 @@ export default function ProgramPanel({
   return (
     <div className="card">
       <div id="info">
-        <b>{tem.nombre}:</b> {tem.ayuda} Enciende las <b>{level.l.length}</b> {level.l.length === 1 ? "bombilla" : "bombillas"} <img className="bi inl" src={ICONO_BLOQUE.B} alt="" style={{ background: BLOQUES.B.color }} />.
+        <b>{tem.nombre}:</b> {tem.ayuda} Enciende las <b>{level.l.length}</b> {level.l.length === 1 ? "bombilla" : "bombillas"} <img className="bi inl" src={ICONO_BLOQUE.B} alt="" style={{ background: BLOQUES.B.color }} />. <small>Si la pulsas dos veces, se apaga.</small>
       </div>
 
       {['main', 'f1', 'f2'].map((k) => {

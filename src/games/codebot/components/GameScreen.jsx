@@ -7,30 +7,66 @@ import { simular } from '../game/interpreter.js';
 import { puntuarNivel, contarBloques } from '../game/scoring.js';
 import { Snd, sfx } from '../game/audio.js';
 import { fmt } from '../utils.js';
+import { guardarPartida } from '../game/guardado.js';
 
 const progVacio = () => ({ main: [], f1: [], f2: [] });
 
 // onIntento(datos): se llama en cada ejecución (acierto o fallo) para registrar los datos
 // onFin({ puntos, tiempoMs, intentos }): se llama al terminar el último nivel
-export default function GameScreen({ jugador, onIntento, onFin }) {
-  const [idx, setIdx] = useState(0);
-  const [prog, setProg] = useState(progVacio);
+export default function GameScreen({ jugador, inicial, getPartidaId, onIntento, onFin }) {
+  const ini = inicial || {};
+  const [idx, setIdx] = useState(ini.idx ?? 0);
+  const [prog, setProg] = useState(() => ini.prog || progVacio());
   const [activa, setActiva] = useState('main');
   const [ocupado, setOcupado] = useState(false);
   const [msg, setMsg] = useState(null);
-  const [runs, setRuns] = useState(0);
-  const [puntos, setPuntos] = useState(0);
+  const [runs, setRuns] = useState(ini.runs ?? 0);
+  const [puntos, setPuntos] = useState(ini.puntos ?? 0);
   const [resultado, setResultado] = useState(null);
   const [ahora, setAhora] = useState(Date.now());
 
-  const t0 = useRef(Date.now());
-  const lvT0 = useRef(Date.now());
-  const lvRuns = useRef(0);
-  const runsTotal = useRef(0);
-  const puntosRef = useRef(0);
+  const t0 = useRef(Date.now() - (ini.tiempoMs || 0));
+  const lvT0 = useRef(Date.now() - (ini.lvMs || 0));
+  const lvRuns = useRef(ini.lvRuns || 0);
+  const runsTotal = useRef(ini.runs || 0);
+  const puntosRef = useRef(ini.puntos || 0);
   const board = useRef(null);
+  const bloqueo = useRef(0); // evita que un doble clic caiga sobre la pantalla siguiente
+  const ganado = useRef(false); // mientras se ve "¡Nivel completado!" ya hay un guardado propio
+  const fin = useRef(false);
+  const vivo = useRef({});
 
   const level = LEVELS[idx];
+  vivo.current = { idx, prog };
+
+  // Guarda la partida en el navegador para poder continuar si algo falla
+  const guardar = (extra) => {
+    guardarPartida({
+      jugador,
+      partidaId: getPartidaId?.() || null,
+      idx: vivo.current.idx,
+      prog: vivo.current.prog,
+      puntos: puntosRef.current,
+      runs: runsTotal.current,
+      lvRuns: lvRuns.current,
+      tiempoMs: Date.now() - t0.current,
+      lvMs: Date.now() - lvT0.current,
+      ...extra,
+    });
+  };
+  useEffect(() => {
+    if (!ganado.current) guardar();
+  }, [idx, prog]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const alSalir = () => { if (!ganado.current && !fin.current) guardar(); };
+    window.addEventListener('pagehide', alSalir);
+    document.addEventListener('visibilitychange', alSalir);
+    return () => {
+      window.removeEventListener('pagehide', alSalir);
+      document.removeEventListener('visibilitychange', alSalir);
+    };
+  }); // eslint-disable-line react-hooks/exhaustive-deps
+  const bloqueado = () => Date.now() < bloqueo.current;
 
   // Cada temática tiene su propia pista cyberpunk
   useEffect(() => { Snd.setTrack(level.t); }, [level.t]);
@@ -42,7 +78,7 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
   }, []);
 
   const agregar = (k) => {
-    if (ocupado) return;
+    if (ocupado || bloqueado()) return;
     const lim = activa === 'main' ? level.m : level[activa];
     if (!lim) return;
     if (prog[activa].length < lim) {
@@ -54,13 +90,13 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
   };
 
   const quitar = (fila, i) => {
-    if (ocupado) return;
+    if (ocupado || bloqueado()) return;
     setProg({ ...prog, [fila]: prog[fila].filter((_, j) => j !== i) });
     sfx('remove');
   };
 
   const clicSlot = (fila, i) => {
-    if (ocupado) return;
+    if (ocupado || bloqueado()) return;
     const b = prog[fila][i];
     if (b.t === 'REP') {
       const n = b.n >= 12 ? 2 : b.n + 1;
@@ -72,13 +108,13 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
   };
 
   const reiniciar = () => {
-    if (ocupado) return;
+    if (ocupado || bloqueado()) return;
     setMsg(null);
     board.current?.reset();
   };
 
   const borrar = () => {
-    if (ocupado) return;
+    if (ocupado || bloqueado()) return;
     setProg(progVacio());
     sfx('remove');
     reiniciar();
@@ -103,6 +139,10 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
         programa: prog,
         puntos: { base: sc.base, rapidez: sc.rapidez, intentos: sc.intentos, bloques: sc.bloques },
       });
+      // Guarda ya el avance: si algo falla en la pantalla de victoria, se continúa en el nivel siguiente
+      ganado.current = true;
+      const ultimo = idx === LEVELS.length - 1;
+      guardar({ idx: ultimo ? idx : idx + 1, prog: progVacio(), lvRuns: 0, lvMs: 0, finalPendiente: ultimo });
       setTimeout(() => setResultado({ sc, intentos: lvRuns.current, total: puntosRef.current }), 1100);
     } else {
       board.current.setMode('sad');
@@ -113,7 +153,7 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
   };
 
   const ejecutar = () => {
-    if (ocupado) return;
+    if (ocupado || bloqueado()) return;
     Snd.init();
     const r = simular(level, prog);
     if (r.vacio) {
@@ -133,8 +173,12 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
   };
 
   const siguiente = () => {
+    // Un segundo clic (doble clic) o un clic fuera de tiempo no debe saltar de nivel dos veces ni pulsar botones de abajo
+    if (bloqueado() || fin.current) return;
+    bloqueo.current = Date.now() + 900;
     sfx('click');
     if (idx === LEVELS.length - 1) {
+      fin.current = true;
       onFin({ puntos: puntosRef.current, tiempoMs: Date.now() - t0.current, intentos: runsTotal.current });
       return;
     }
@@ -145,6 +189,7 @@ export default function GameScreen({ jugador, onIntento, onFin }) {
     setResultado(null);
     lvRuns.current = 0;
     lvT0.current = Date.now();
+    ganado.current = false;
   };
 
   return (

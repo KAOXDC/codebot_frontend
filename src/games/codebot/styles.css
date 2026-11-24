@@ -103,3 +103,7 @@ input:focus,select:focus{outline:0;border-color:var(--pri2)}
 .slot .rn{position:absolute;left:2px;bottom:0;font-style:normal;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6);background:rgba(0,0,0,.28);border-radius:6px;padding:0 3px}
 .ai{display:inline-block;width:1.15em;height:1.15em;margin-right:6px;vertical-align:-.2em;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
 @media(max-width:760px){.slot{width:46px;height:46px}.pb{width:68px;height:66px}.pb .bi{width:40px;height:40px}}
+
+.resume{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 4px;padding:12px 14px;border:2px solid #818cf8;border-radius:14px;background:linear-gradient(135deg,#eef2ff,#e0f2fe)}
+.resume .note{margin-top:2px}
+.resbtn{display:flex;gap:8px}

@@ -4,7 +4,7 @@ import CharacterPicker from './CharacterPicker.jsx';
 import Ranking from './Ranking.jsx';
 import { TEMATICAS, LEVELS } from '../game/levels.js';
 
-export default function StartScreen({ onStart }) {
+export default function StartScreen({ onStart, guardada, onContinuar, onDescartar }) {
   // El profesor puede compartir un enlace con el grupo y la sesión ya puestos:
   //   https://tu-sitio/?grupo=A&sesion=Clase1
   const params = new URLSearchParams(window.location.search);
@@ -42,6 +42,21 @@ export default function StartScreen({ onStart }) {
               </motion.span>
             ))}
           </div>
+
+          {guardada && (
+            <div className="resume">
+              <div>
+                <b>Tienes una partida guardada</b>
+                <div className="note">
+                  👤 {guardada.jugador.nombre} · Nivel {Math.min(guardada.idx + 1, LEVELS.length)} de {LEVELS.length} · ⭐ {guardada.puntos || 0} pts
+                </div>
+              </div>
+              <div className="resbtn">
+                <button className="go" onClick={onContinuar}>Continuar ▶</button>
+                <button className="sec" onClick={onDescartar}>Descartar</button>
+              </div>
+            </div>
+          )}
 
           <div className="lbl">Tu nombre</div>
           <input
