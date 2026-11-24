@@ -100,8 +100,8 @@ const arrancarPista = () => {
   music.setTempo(activeTrack, ac.currentTime);
   const g = music.out.gain;
   g.cancelScheduledValues(ac.currentTime);
-  g.setValueAtTime(0.0001, ac.currentTime);
-  g.linearRampToValueAtTime(muted ? 0.0001 : 0.7, ac.currentTime + 1.2);
+  // sin fundido: la música arranca ya "en marcha", como un bucle que nunca empezó ni termina
+  g.setValueAtTime(muted ? 0.0001 : 0.7, ac.currentTime);
 };
 
 export const Snd = {

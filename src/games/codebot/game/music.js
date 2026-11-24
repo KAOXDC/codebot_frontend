@@ -129,7 +129,7 @@ export function createMusic(ac, dest) {
   // ------------------------------------------------------------------------------------------
   // 0 · SECUENCIAS — "Neon Streets": la -menor, 100 bpm. Arpegio que sube paso a paso, una nota tras otra.
   const T0 = {
-    bpm: 100, bars: 4,
+    bpm: 100, bars: 8,
     play(bar, s, t) {
       const root = at([45, 41, 48, 43], bar);
       const ch = [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]][bar % 4];
@@ -148,7 +148,7 @@ export function createMusic(ac, dest) {
   // 1 · FUNCIONES — "Subroutine": re menor, 108 bpm. Un motivo (la función) que se llama una y otra vez.
   const MOTIF = [0, 0, 0, 7, 0, 0, 5, 0, 3, 0, 0, 0, 7, 0, 0, 0]; // grados sobre la fundamental
   const T1 = {
-    bpm: 108, bars: 4,
+    bpm: 108, bars: 8,
     play(bar, s, t) {
       const root = at([50, 46, 53, 48], bar);
       const ch = [[62, 65, 69], [58, 62, 65], [65, 69, 72], [60, 64, 67]][bar % 4];
@@ -159,7 +159,7 @@ export function createMusic(ac, dest) {
       if ([0, 3, 6, 10, 12, 14].includes(s)) bass(root - 12 + (s === 14 ? 12 : 0), t, L(1) * 2.2, 0.21, 700);
       // llamada a la función: el mismo motivo en cada compás, transpuesto a su acorde
       const g = MOTIF[s];
-      if (g || (s === 0 && bar >= 0)) lead(root + 12 + g + (bar === 3 && s === 12 ? 5 : 0), t, L(1) * 2.6, 0.055, { echo: 0.45 });
+      if (g || (s === 0 && bar >= 0)) lead(root + 12 + g + (bar % 4 === 3 && s === 12 ? 5 : 0), t, L(1) * 2.6, 0.055, { echo: 0.45 });
       if (s === 8 && bar % 2 === 1) pluck(root + 31, t, L(1) * 2, 0.05);
     },
   };
@@ -167,28 +167,28 @@ export function createMusic(ac, dest) {
   // 2 · BUCLES — "Loop Runner": mi menor, 118 bpm. Bajo en galope y un riff de 4 notas que gira sin parar.
   const RIFF = [64, 67, 71, 67]; // se repite cada 4 pasos
   const T2 = {
-    bpm: 118, bars: 4,
+    bpm: 118, bars: 8,
     play(bar, s, t) {
       const root = at([40, 40, 36, 38], bar);
       const ch = [[52, 55, 59], [52, 55, 59], [48, 52, 55], [50, 54, 57]][bar % 4];
-      if (s === 0) padChord(ch.map((m) => m + 12), t, L(2) * 16, 0.018, 700 + bar * 450);
+      if (s === 0) padChord(ch.map((m) => m + 12), t, L(2) * 16, 0.018, 700 + (bar % 4) * 450);
       if (s % 4 === 0) kick(t, 0.95);
       if (s === 4 || s === 12) clap(t, 0.5);
       if (s % 2 === 0) hat(t, 0.13, s % 4 === 2);
       bass(root + (s % 4 === 3 ? 12 : 0), t, L(2) * 0.95, 0.19, 500 + (bar % 2) * 300); // 16avos sin parar
-      const m = RIFF[s % 4] + (bar === 2 ? -4 : bar === 3 ? -2 : 0);
+      const m = RIFF[s % 4] + (bar % 4 === 2 ? -4 : bar % 4 === 3 ? -2 : 0);
       pluck(m + 12, t, L(2) * 1.6, 0.045, { echo: 0.5 });
-      if (s === 0 && bar === 3) noise(t, 'bandpass', 3000, 0.1, L(2) * 12);
+      if (s === 0 && bar % 4 === 3) noise(t, 'bandpass', 3000, 0.1, L(2) * 12);
     },
   };
 
   // 3 · CONDICIONALES — "Branch.exe": sol menor, 92 bpm. Dos caminos: si (menor) / si no (mayor), con glitch.
   const T3 = {
-    bpm: 92, bars: 4,
+    bpm: 92, bars: 8,
     play(bar, s, t) {
       const root = at([43, 39, 43, 38], bar); // Gm  Eb  Gm  D (¡la rama mayor!)
       const ch = [[55, 58, 62], [51, 55, 58], [55, 58, 62], [50, 54, 57]][bar % 4];
-      const rama = bar === 3;
+      const rama = bar % 4 === 3;
       if (s === 0) padChord(ch, t, L(3) * 16, 0.022, rama ? 1800 : 950);
       if ([0, 7, 10].includes(s)) kick(t, 0.95);
       if (s === 8) clap(t, 0.6);
@@ -221,6 +221,11 @@ export function createMusic(ac, dest) {
     },
   };
 
+  // Acordes de cada pista (para las capas extra de la frase B)
+  T0.chords = [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]];
+  T1.chords = [[62, 65, 69], [58, 62, 65], [65, 69, 72], [60, 64, 67]];
+  T2.chords = [[52, 55, 59], [52, 55, 59], [48, 52, 55], [50, 54, 57]];
+  T3.chords = [[55, 58, 62], [51, 55, 58], [55, 58, 62], [50, 54, 57]];
   const tracks = [T0, T1, T2, T3, T4];
   const step = (id) => 60 / tracks[id].bpm / 4;
   function L(id) { return step(id); }
@@ -232,6 +237,14 @@ export function createMusic(ac, dest) {
     setTempo(id, t = ac.currentTime) { echo.delayTime.setTargetAtTime(step(id) * 3, t, 0.05); },
     play(id, bar, s, t) {
       tracks[id].play(bar, s, t);
+      // Frase B (compases 5-8): más intensa, con arpegio agudo, platillo abierto y nota larga de lead
+      if (id < 4 && bar >= 4) {
+        const ch = tracks[id].chords[bar % 4];
+        const st = step(id);
+        if (s % 2 === 1) pluck(ch[(s >> 1) % 3] + 24, t, st * 1.6, 0.032, { echo: 0.5 });
+        if (s % 8 === 4) hat(t, 0.1, true);
+        if (s === 0) lead(ch[2] + 24, t, st * 14, 0.035, { atk: 0.3, rel: 0.5 });
+      }
       // remate del último compás: redoble de hi-hats que "empuja" hacia el primer tiempo del bucle
       if (bar === tracks[id].bars - 1 && s >= 12 && id < 4) {
         hat(t, 0.05 + (s - 12) * 0.03);
