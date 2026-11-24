@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion } from 'motion/react';
 import CharacterPicker from './CharacterPicker.jsx';
 import Ranking from './Ranking.jsx';
 import { TEMATICAS, LEVELS } from '../game/levels.js';
@@ -24,9 +25,9 @@ export default function StartScreen({ onStart }) {
   return (
     <div className="wrap">
       <div id="start">
-        <div className="card">
+        <motion.div className="card" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 120, damping: 16 }}>
           <div className="brand">
-            <span className="logo">🤖</span>
+            <motion.span className="logo" animate={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 2 }}>🤖</motion.span>
             <h1>CodeBot</h1>
           </div>
           <p className="lead">
@@ -36,7 +37,9 @@ export default function StartScreen({ onStart }) {
           </p>
           <div className="chips">
             {TEMATICAS.map((t, i) => (
-              <span className="chip" key={t.nombre}>{i + 1} · {t.nombre}</span>
+              <motion.span className={'chip c' + (i % 4)} key={t.nombre} initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 + i * 0.08, type: 'spring', stiffness: 300, damping: 18 }}>
+                {i + 1} · {t.nombre}
+              </motion.span>
             ))}
           </div>
 
@@ -68,12 +71,12 @@ export default function StartScreen({ onStart }) {
             <button className="go" onClick={empezar}>¡Empezar!</button>
           </p>
           {error && <p className="error">{error}</p>}
-        </div>
+        </motion.div>
 
-        <div className="card">
+        <motion.div className="card" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 120, damping: 16, delay: 0.12 }}>
           <h2>🏆 Ranking</h2>
           <Ranking filtro={filtro} />
-        </div>
+        </motion.div>
       </div>
     </div>
   );

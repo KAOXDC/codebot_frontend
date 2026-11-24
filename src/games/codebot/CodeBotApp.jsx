@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import GameShell from '../../shell/GameShell.jsx'
 import css from './styles.css?inline'
 import StartScreen from './components/StartScreen.jsx'
@@ -66,9 +67,20 @@ export default function CodeBotApp() {
 
   return (
     <GameShell title="CodeBot · Lógica de programación" css={css} confirmExit={pantalla === 'juego'}>
-      {pantalla === 'inicio' && <StartScreen onStart={empezar} />}
-      {pantalla === 'juego' && <GameScreen jugador={jugador} onIntento={registrarIntento} onFin={terminar} />}
-      {pantalla === 'fin' && <EndScreen jugador={jugador} final={final} guardando={guardado === 0} guardado={guardado} />}
+      <div className="bgdecor" aria-hidden="true"><i /><i /><i /></div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={pantalla}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.22 }}
+        >
+          {pantalla === 'inicio' && <StartScreen onStart={empezar} />}
+          {pantalla === 'juego' && <GameScreen jugador={jugador} onIntento={registrarIntento} onFin={terminar} />}
+          {pantalla === 'fin' && <EndScreen jugador={jugador} final={final} guardando={guardado === 0} guardado={guardado} />}
+        </motion.div>
+      </AnimatePresence>
       <button className="mute" title="Sonido" onClick={() => setSilencio(Snd.toggle())}>
         {silencio ? '🔇' : '🔊'}
       </button>

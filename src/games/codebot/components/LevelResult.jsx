@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { sfx } from '../game/audio.js';
+import { celebrar } from '../../../shell/fx.js';
+
+const F = { o: { opacity: 0, x: -14 }, v: { opacity: 1, x: 0 } };
 
 // Pantalla que aparece al completar un nivel: estrellas, puntos y desglose
 export default function LevelResult({ nivel, r, intentos, total, ultimo, onNext }) {
@@ -7,7 +11,7 @@ export default function LevelResult({ nivel, r, intentos, total, ultimo, onNext 
   const [cuenta, setCuenta] = useState(0);
 
   useEffect(() => {
-    const timers = [];
+    const timers = [setTimeout(() => celebrar(r.estrellas / 3 + 0.4), 250)];
     for (let i = 0; i < r.estrellas; i++) {
       timers.push(
         setTimeout(() => {
@@ -30,25 +34,30 @@ export default function LevelResult({ nivel, r, intentos, total, ultimo, onNext 
   }, [r]);
 
   return (
-    <div className="ov">
-      <div className="box">
+    <motion.div className="ov" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <motion.div className="box" initial={{ scale: 0.7, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 220, damping: 16 }}>
         <h2>¡Nivel {nivel} completado!</h2>
         <div className="stars">
           {[0, 1, 2].map((i) => (
-            <span key={i} className={'star' + (i < estrellas ? ' on' : '')}>⭐</span>
+            <motion.span
+              key={i}
+              className={'star' + (i < estrellas ? ' on' : '')}
+              animate={i < estrellas ? { scale: [0.4, 1.6, 1], rotate: [-40, 15, 0], opacity: 1 } : { scale: 0.6, opacity: 0.25 }}
+              transition={{ duration: 0.5 }}
+            >⭐</motion.span>
           ))}
         </div>
         <div className="big">{cuenta}</div>
         <div className="note">puntos en este nivel</div>
-        <div className="brk">
-          <div><span>Nivel superado</span><span>+{r.base}</span></div>
-          <div><span>⏱ Rapidez ({r.segundos}s)</span><span>+{r.rapidez}</span></div>
-          <div><span>▶ Pocos intentos ({intentos})</span><span>+{r.intentos}</span></div>
-          <div><span>🧩 Pocos bloques ({r.bloquesUsados})</span><span>+{r.bloques}</span></div>
-        </div>
+        <motion.div className="brk" initial="o" animate="v" variants={{ v: { transition: { staggerChildren: 0.12, delayChildren: 0.4 } } }}>
+          <motion.div variants={F}><span>Nivel superado</span><span>+{r.base}</span></motion.div>
+          <motion.div variants={F}><span>⏱ Rapidez ({r.segundos}s)</span><span>+{r.rapidez}</span></motion.div>
+          <motion.div variants={F}><span>▶ Pocos intentos ({intentos})</span><span>+{r.intentos}</span></motion.div>
+          <motion.div variants={F}><span>🧩 Pocos bloques ({r.bloquesUsados})</span><span>+{r.bloques}</span></motion.div>
+        </motion.div>
         <div className="tot">Total acumulado: <b>{total} pts</b></div>
         <button className="go" onClick={onNext}>{ultimo ? 'Ver resultado final 🏁' : 'Siguiente nivel →'}</button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

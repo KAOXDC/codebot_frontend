@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import StyleScope from '../shell/StyleScope.jsx'
 import hubCss from './hub.css?inline'
 import RobotPreview from './RobotPreview.jsx'
@@ -7,8 +8,26 @@ import { HEROES } from '../games/codequest/engine/heroes.js'
 import { LEVEL_COUNT, WORLDS } from '../games/codequest/engine/levels.js'
 import { LEVELS as CODEBOT_LEVELS, TEMATICAS } from '../games/codebot/game/levels.js'
 
+const lista = { oculto: {}, visible: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } } }
+const sube = { oculto: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 16 } } }
+
+// Personaje que flota suavemente (cada uno con su retraso)
+function Flota({ children, i = 0, quieto }) {
+  return (
+    <motion.div
+      animate={quieto ? undefined : { y: [0, -8, 0] }}
+      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', delay: i * 0.35 }}
+      style={{ display: 'flex' }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
 // Menú de inicio: elige el juego.
 export default function Hub() {
+  const quieto = useReducedMotion()
+
   useEffect(() => {
     const anterior = document.title
     document.title = 'Juegos de lógica de programación'
@@ -17,18 +36,29 @@ export default function Hub() {
     }
   }, [])
 
+  const hover = quieto ? undefined : { y: -8, scale: 1.02 }
+  const tap = quieto ? undefined : { scale: 0.985 }
+
   return (
     <>
       <StyleScope css={hubCss} />
-      <main className="hub">
-        <h1>Aprende lógica de programación jugando</h1>
-        <p className="lead">Elige un juego para empezar</p>
+      <div className="blobs" aria-hidden="true">
+        <i className="b1" />
+        <i className="b2" />
+        <i className="b3" />
+      </div>
+      <motion.main className="hub" variants={lista} initial="oculto" animate="visible">
+        <motion.span className="eyebrow" variants={sube}>🎮 Juegos de lógica</motion.span>
+        <motion.h1 variants={sube}>
+          Aprende lógica de <span className="grad">programación</span> jugando
+        </motion.h1>
+        <motion.p className="lead" variants={sube}>Elige un juego para empezar</motion.p>
 
         <div className="games">
-          <a className="gcard bot" href="#/codebot">
+          <motion.a className="gcard bot" href="#/codebot" variants={sube} whileHover={hover} whileTap={tap}>
             <div className="art">
-              <RobotPreview g="m" />
-              <RobotPreview g="f" />
+              <Flota quieto={quieto}><RobotPreview g="m" /></Flota>
+              <Flota quieto={quieto} i={1}><RobotPreview g="f" /></Flota>
             </div>
             <span className="tag">Con bloques</span>
             <h2>CodeBot</h2>
@@ -39,13 +69,15 @@ export default function Hub() {
               <span>≈ 1 hora</span>
               <span>Ranking</span>
             </div>
-            <span className="play">Jugar CodeBot →</span>
-          </a>
+            <span className="play">Jugar CodeBot <b className="arr">→</b></span>
+          </motion.a>
 
-          <a className="gcard quest" href="#/codequest">
+          <motion.a className="gcard quest" href="#/codequest" variants={sube} whileHover={hover} whileTap={tap}>
             <div className="art px">
-              {HEROES.map((h) => (
-                <HeroSprite key={h.id} hero={h} size={72} />
+              {HEROES.map((h, i) => (
+                <Flota key={h.id} quieto={quieto} i={i}>
+                  <HeroSprite hero={h} size={72} />
+                </Flota>
               ))}
             </div>
             <span className="tag">Con código Python</span>
@@ -57,14 +89,14 @@ export default function Hub() {
               <span>4 héroes</span>
               <span>Medallas</span>
             </div>
-            <span className="play">Jugar CodeQuest →</span>
-          </a>
+            <span className="play">Jugar CodeQuest <b className="arr">→</b></span>
+          </motion.a>
         </div>
 
-        <p className="foot">
+        <motion.p className="foot" variants={sube}>
           <a href="#/panel">Panel del profesor</a>
-        </p>
-      </main>
+        </motion.p>
+      </motion.main>
     </>
   )
 }
