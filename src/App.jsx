@@ -1,88 +1,43 @@
-import { useEffect, useRef, useState } from 'react';
-import StartScreen from './components/StartScreen.jsx';
-import GameScreen from './components/GameScreen.jsx';
-import EndScreen from './components/EndScreen.jsx';
-import Panel from './pages/Panel.jsx';
-import { Snd, sfx } from './game/audio.js';
-import { api } from './api.js';
+import { lazy, Suspense, useEffect, useState } from 'react'
+import Hub from './hub/Hub.jsx'
 
-function Juego() {
-  const [pantalla, setPantalla] = useState('inicio'); // inicio | juego | fin
-  const [jugador, setJugador] = useState(null);
-  const [final, setFinal] = useState(null);
-  const [guardado, setGuardado] = useState(0);
-  const [silencio, setSilencio] = useState(false);
+// Cada juego se carga solo cuando se abre (el menú inicial pesa poco).
+const CodeBotApp = lazy(() => import('./games/codebot/CodeBotApp.jsx'))
+const CodeQuestApp = lazy(() => import('./games/codequest/CodeQuestApp.jsx'))
+const PanelPage = lazy(() => import('./games/codebot/pages/PanelPage.jsx'))
 
-  const jugadorRef = useRef(null);
-  const partidaId = useRef(null);
-  const cola = useRef(Promise.resolve());
+// Rutas por "hash" para que el botón Atrás del navegador funcione y se puedan compartir enlaces directos:
+//   /            → menú          /#/codebot → CodeBot
+//   /#/codequest → CodeQuest     /#/panel   → panel del profesor
+// Los parámetros ?grupo=A&sesion=Clase1 se conservan al navegar.
+const rutaDe = (hash) =>
+  hash.startsWith('#/codebot') ? 'codebot'
+  : hash.startsWith('#/codequest') ? 'codequest'
+  : hash.startsWith('#/panel') ? 'panel'
+  : 'hub'
 
-  // Las llamadas al servidor van en cola para que lleguen en orden (partida → intentos → finalizar)
-  const encolar = (fn) => {
-    cola.current = cola.current.then(fn).catch(() => {});
-    return cola.current;
-  };
-
-  const asegurarPartida = async () => {
-    if (partidaId.current) return partidaId.current;
-    try {
-      const r = await api.crearPartida(jugadorRef.current);
-      partidaId.current = r.partidaId;
-    } catch {
-      /* si el servidor no responde, el juego sigue funcionando sin registrar */
-    }
-    return partidaId.current;
-  };
-
-  const empezar = (datos) => {
-    Snd.init();
-    Snd.startMusic();
-    sfx('click');
-    jugadorRef.current = datos;
-    setJugador(datos);
-    setPantalla('juego');
-    encolar(asegurarPartida);
-  };
-
-  const registrarIntento = (datos) =>
-    encolar(async () => {
-      const id = await asegurarPartida();
-      if (id) await api.registrarIntento(id, datos);
-    });
-
-  const terminar = async (resultado) => {
-    setFinal(resultado);
-    setPantalla('fin');
-    await encolar(async () => {
-      const id = await asegurarPartida();
-      if (id) await api.finalizarPartida(id);
-    });
-    setGuardado((g) => g + 1);
-  };
-
-  return (
-    <>
-      {pantalla === 'inicio' && <StartScreen onStart={empezar} />}
-      {pantalla === 'juego' && <GameScreen jugador={jugador} onIntento={registrarIntento} onFin={terminar} />}
-      {pantalla === 'fin' && <EndScreen jugador={jugador} final={final} guardando={guardado === 0} guardado={guardado} />}
-      <button
-        className="mute"
-        title="Sonido"
-        onClick={() => setSilencio(Snd.toggle())}
-      >
-        {silencio ? '🔇' : '🔊'}
-      </button>
-    </>
-  );
-}
+const Cargando = () => (
+  <div style={{ padding: 24, font: '16px system-ui, sans-serif', color: '#64748b' }}>Cargando…</div>
+)
 
 export default function App() {
-  const [ruta, setRuta] = useState(window.location.hash);
+  const [ruta, setRuta] = useState(() => rutaDe(window.location.hash))
+
   useEffect(() => {
-    const cambio = () => setRuta(window.location.hash);
-    window.addEventListener('hashchange', cambio);
-    return () => window.removeEventListener('hashchange', cambio);
-  }, []);
-  // El panel del profesor vive en  /#/panel
-  return ruta.startsWith('#/panel') ? <Panel /> : <Juego />;
+    const cambio = () => {
+      setRuta(rutaDe(window.location.hash))
+      window.scrollTo(0, 0)
+    }
+    window.addEventListener('hashchange', cambio)
+    return () => window.removeEventListener('hashchange', cambio)
+  }, [])
+
+  if (ruta === 'hub') return <Hub />
+  return (
+    <Suspense fallback={<Cargando />}>
+      {ruta === 'codebot' && <CodeBotApp />}
+      {ruta === 'codequest' && <CodeQuestApp />}
+      {ruta === 'panel' && <PanelPage />}
+    </Suspense>
+  )
 }

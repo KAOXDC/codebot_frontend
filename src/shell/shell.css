@@ -1,0 +1,11 @@
+.hubback {
+  position: fixed; left: 12px; bottom: 12px; z-index: 60;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border-radius: 999px;
+  background: rgba(15, 23, 42, .88); color: #fff;
+  border: 1px solid rgba(255, 255, 255, .18);
+  font: 600 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-decoration: none; box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+}
+.hubback:hover { background: #0f172a; }
+.hubback:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
