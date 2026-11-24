@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { lluviaFinal } from '../../../shell/fx.js';
+import CertificadoBoton from '../../../shell/CertificadoBoton.jsx';
 import Ranking from './Ranking.jsx';
 import { fmt } from '../utils.js';
 
@@ -22,7 +23,19 @@ export default function EndScreen({ jugador, final, guardando, guardado }) {
         <div style={{ textAlign: 'left' }}>
           <Ranking yo={jugador.nombre} filtro={filtro} refrescar={guardado} />
         </div>
-        <p>
+        <p style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <CertificadoBoton
+            datos={{
+              nombre: jugador.nombre,
+              juego: 'CodeBot',
+              descripcion: 'Programación con bloques: secuencias, funciones, bucles y condicionales',
+              estadisticas: [
+                { valor: final.puntos, etiqueta: 'puntos' },
+                { valor: fmt(final.tiempoMs), etiqueta: 'tiempo total' },
+                { valor: '12 / 12', etiqueta: 'niveles' },
+              ],
+            }}
+          />
           <button className="go" onClick={() => window.location.reload()}>Jugar de nuevo</button>
         </p>
       </motion.div>

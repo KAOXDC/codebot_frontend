@@ -3,10 +3,12 @@ import { getHero } from '../engine/heroes.js'
 import { medalEmojis } from '../engine/medals.js'
 import { sfx } from '../audio/audio.js'
 import { pendingCount } from '../api/client.js'
+import CertificadoBoton from '../../../shell/CertificadoBoton.jsx'
 
 export default function MapScreen({ session, progress, muted, onToggleMute, onOpen, onLogout }) {
   const hero = getHero(session.heroId)
   const pending = pendingCount()
+  const completos = LEVELS.every((l) => progress.isDone(l.index))
   return (
     <div className="card">
       <div className="top">
@@ -22,6 +24,24 @@ export default function MapScreen({ session, progress, muted, onToggleMute, onOp
           <button className="sec" onClick={() => { sfx.click(); progress.toggleAllOpen() }}>{progress.allOpen ? '🔒 Bloquear niveles' : '🔓 Ver todos los niveles'}</button>
         </div>
       </div>
+      {completos && (
+        <div className="row" style={{ margin: '12px 0', justifyContent: 'center', gap: 12 }}>
+          <b>🎉 ¡Completaste las {LEVEL_COUNT} misiones!</b>
+          <CertificadoBoton
+            className="sec"
+            datos={{
+              nombre: session.username,
+              juego: 'CodeQuest',
+              descripcion: `Aventura en Python con ${hero.name} el/la ${hero.role}: variables, condicionales, ciclos y funciones`,
+              estadisticas: [
+                { valor: progress.totalPoints, etiqueta: 'puntos' },
+                { valor: `${progress.totalMedals} / ${LEVEL_COUNT * 3}`, etiqueta: 'medallas' },
+                { valor: `${LEVEL_COUNT} / ${LEVEL_COUNT}`, etiqueta: 'niveles' },
+              ],
+            }}
+          />
+        </div>
+      )}
       {WORLDS.map((name, wi) => (
         <div key={name}>
           <div className="world">Mundo {wi + 1}: {name}</div>
